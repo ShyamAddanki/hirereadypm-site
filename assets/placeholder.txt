@@ -1,0 +1,5 @@
+Replace this file with your professional headshot:
+- Filename: photo.jpg
+- Recommended: 520x520px square crop, professional
+- The HTML already references assets/photo.jpg
+- The img tag has onerror="this.style.display='none'" so missing photo is graceful
