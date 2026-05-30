@@ -10,22 +10,22 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    background: #0F0F0F;
-    color: #E8E8E8;
+    background: #F5F7FA;
+    color: #1A1A2E;
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 40px 24px 60px;
+    padding: 24px 24px 40px;
   }
 
   .title {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 800;
     text-align: center;
-    margin-bottom: 8px;
-    background: linear-gradient(135deg, #00D4AA, #33E5C0);
+    margin-bottom: 4px;
+    background: linear-gradient(135deg, #009E7F, #00D4AA);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -33,12 +33,12 @@
 
   .subtitle {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    color: #6A6A7A;
+    font-size: 11px;
+    color: #8A8A9A;
     text-align: center;
     letter-spacing: 2px;
     text-transform: uppercase;
-    margin-bottom: 48px;
+    margin-bottom: 20px;
   }
 
   /* ── Main flow ── */
@@ -48,7 +48,7 @@
     gap: 0;
     width: 100%;
     max-width: 1100px;
-    margin-bottom: 48px;
+    margin-bottom: 20px;
   }
 
   .node {
@@ -56,7 +56,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     opacity: 0.25;
     transition: opacity 0.5s ease, transform 0.5s ease;
     transform: translateY(6px);
@@ -68,44 +68,44 @@
   }
 
   .node-icon {
-    width: 72px;
-    height: 72px;
-    border-radius: 18px;
+    width: 68px;
+    height: 68px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
+    font-size: 26px;
     border: 2px solid transparent;
     transition: all 0.5s ease;
-    background: #1A1A2E;
+    background: #E8ECF4;
   }
 
   .node.active .node-icon {
     border-color: #00D4AA;
-    box-shadow: 0 0 24px rgba(0,212,170,0.3);
-    background: #1A1A2E;
+    box-shadow: 0 0 20px rgba(0,212,170,0.25);
+    background: #fff;
   }
 
   .node-label {
     font-size: 13px;
     font-weight: 700;
     text-align: center;
-    color: #9A9A9A;
+    color: #ABABBB;
     transition: color 0.5s ease;
   }
 
-  .node.active .node-label { color: #E8E8E8; }
+  .node.active .node-label { color: #1A1A2E; }
 
   .node-sub {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
-    color: #6A6A7A;
+    color: #ABABBB;
     text-align: center;
     line-height: 1.5;
     transition: color 0.5s ease;
   }
 
-  .node.active .node-sub { color: #00D4AA; }
+  .node.active .node-sub { color: #009E7F; }
 
   /* ── Arrow ── */
   .arrow {
@@ -114,7 +114,7 @@
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    opacity: 0.15;
+    opacity: 0.2;
     transition: opacity 0.5s ease;
     position: relative;
   }
@@ -176,13 +176,13 @@
   .internals {
     width: 100%;
     max-width: 1100px;
-    background: #1A1A2E;
-    border: 1px solid #2A2A3E;
-    border-radius: 20px;
-    padding: 32px;
-    margin-bottom: 40px;
+    background: #fff;
+    border: 1px solid #D8DEE9;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(12px);
     transition: opacity 0.6s ease, transform 0.6s ease;
   }
 
@@ -197,8 +197,8 @@
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: #00D4AA;
-    margin-bottom: 24px;
+    color: #009E7F;
+    margin-bottom: 16px;
     text-align: center;
   }
 
@@ -210,12 +210,12 @@
 
   .step {
     flex: 1;
-    padding: 20px 16px;
-    border-radius: 12px;
-    background: #0F0F0F;
-    border: 1px solid #2A2A3E;
+    padding: 16px 12px;
+    border-radius: 10px;
+    background: #F5F7FA;
+    border: 1px solid #D8DEE9;
     text-align: center;
-    opacity: 0.3;
+    opacity: 0.35;
     transition: all 0.4s ease;
     position: relative;
   }
@@ -223,41 +223,42 @@
   .step.lit {
     opacity: 1;
     border-color: #00D4AA;
-    box-shadow: 0 0 16px rgba(0,212,170,0.15);
+    background: #fff;
+    box-shadow: 0 0 14px rgba(0,212,170,0.12);
   }
 
   .step-num {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    color: #6A6A7A;
-    margin-bottom: 8px;
+    color: #ABABBB;
+    margin-bottom: 6px;
   }
 
-  .step.lit .step-num { color: #00D4AA; }
+  .step.lit .step-num { color: #009E7F; }
 
-  .step-icon { font-size: 24px; margin-bottom: 8px; }
+  .step-icon { font-size: 22px; margin-bottom: 6px; }
 
   .step-name {
     font-size: 13px;
     font-weight: 700;
-    margin-bottom: 6px;
-    color: #E8E8E8;
+    margin-bottom: 4px;
+    color: #1A1A2E;
   }
 
   .step-desc {
     font-size: 11px;
-    color: #6A6A7A;
+    color: #8A8A9A;
     line-height: 1.5;
   }
 
-  .step.lit .step-desc { color: #9A9A9A; }
+  .step.lit .step-desc { color: #4A4A6A; }
 
   .step-arrow {
     flex: 0 0 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #2A2A3E;
+    color: #C8CEE0;
     font-size: 16px;
     font-weight: 700;
   }
@@ -266,39 +267,40 @@
   .info-panel {
     width: 100%;
     max-width: 1100px;
-    min-height: 100px;
-    background: #1A1A2E;
-    border: 1px solid #2A2A3E;
-    border-radius: 16px;
-    padding: 28px 32px;
-    margin-bottom: 32px;
+    min-height: 80px;
+    background: #fff;
+    border: 1px solid #D8DEE9;
+    border-left: 4px solid #00D4AA;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
     transition: all 0.4s ease;
   }
 
   .info-title {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
-    color: #00D4AA;
-    margin-bottom: 10px;
+    color: #009E7F;
+    margin-bottom: 8px;
   }
 
   .info-text {
     font-size: 14px;
-    color: #9A9A9A;
-    line-height: 1.7;
+    color: #4A4A6A;
+    line-height: 1.65;
   }
 
-  .info-text strong { color: #E8E8E8; }
+  .info-text strong { color: #1A1A2E; }
 
   .info-code {
     font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
-    background: #0F0F0F;
-    border: 1px solid #2A2A3E;
+    background: #F0F4F8;
+    border: 1px solid #D8DEE9;
     border-radius: 8px;
     padding: 12px 16px;
-    margin-top: 12px;
-    color: #00D4AA;
+    margin-top: 10px;
+    color: #009E7F;
     line-height: 1.6;
   }
 
@@ -322,23 +324,23 @@
 
   .btn-primary {
     background: #00D4AA;
-    color: #0F0F0F;
+    color: #fff;
   }
 
-  .btn-primary:hover { background: #33E5C0; transform: translateY(-1px); }
+  .btn-primary:hover { background: #009E7F; transform: translateY(-1px); }
 
   .btn-secondary {
     background: transparent;
-    color: #9A9A9A;
-    border: 1px solid #2A2A3E;
+    color: #8A8A9A;
+    border: 1px solid #C8CEE0;
   }
 
-  .btn-secondary:hover { border-color: #00D4AA; color: #00D4AA; }
+  .btn-secondary:hover { border-color: #00D4AA; color: #009E7F; }
 
   .step-counter {
     font-family: 'JetBrains Mono', monospace;
     font-size: 13px;
-    color: #6A6A7A;
+    color: #8A8A9A;
   }
 
   /* ── Security badge ── */
@@ -346,20 +348,20 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: rgba(240,165,0,0.1);
-    border: 1px solid rgba(240,165,0,0.3);
+    background: rgba(240,165,0,0.08);
+    border: 1px solid rgba(240,165,0,0.4);
     border-radius: 8px;
     padding: 8px 14px;
     font-size: 12px;
     font-weight: 600;
-    color: #F0A500;
+    color: #C07800;
     margin-top: 12px;
   }
 
   .tag-pill {
     display: inline-block;
-    background: rgba(0,212,170,0.1);
-    color: #00D4AA;
+    background: rgba(0,158,127,0.1);
+    color: #009E7F;
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     padding: 3px 8px;
@@ -602,8 +604,8 @@ function reset() {
   document.querySelectorAll('.arrow').forEach(a => a.classList.remove('active'));
   document.querySelectorAll('.step').forEach(s => s.classList.remove('lit'));
   document.getElementById('internals').classList.remove('visible');
-  document.getElementById('info-title').textContent = 'Click "Start" to walk through the request lifecycle';
-  document.getElementById('info-text').innerHTML = 'Every Claude API interaction follows 5 predictable phases. Understanding them helps you design secure architectures, set the right token limits, and debug issues faster.';
+  document.getElementById('info-title').textContent = '5 phases. Every Claude API call. Every time.';
+  document.getElementById('info-text').innerHTML = 'Miss one and your app leaks keys, drops tool calls, or burns tokens. <strong>Hit ▶ Start</strong> — takes 60 seconds.';
   document.getElementById('counter').textContent = 'Step 0 / ' + steps.length;
   document.getElementById('btn-next').textContent = '▶ Start';
 }
