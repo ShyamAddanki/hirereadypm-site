@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>Shyam Addanki — AI Portfolio</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%2300D4AA'/><text x='50' y='68' font-family='sans-serif' font-size='52' font-weight='bold' text-anchor='middle' fill='%230F0F0F'>S</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -28,7 +31,8 @@
       </div>
     </div>
     <div class="hero-photo">
-      <img src="assets/photo.jpg" alt="Shyam Addanki" onerror="this.style.display='none'">
+      <img src="assets/photo.jpg" alt="Shyam Addanki" onerror="this.closest('.hero-photo').classList.add('no-photo')">
+      <div class="photo-fallback" aria-hidden="true">SA</div>
     </div>
   </div>
 </section>
