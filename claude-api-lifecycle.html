@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude API Request Lifecycle</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0F0F0F;
+    color: #E8E8E8;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px 60px;
+  }
+
+  .title {
+    font-size: 28px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #00D4AA, #33E5C0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #6A6A7A;
+    text-align: center;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+  }
+
+  /* ── Main flow ── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+    max-width: 1100px;
+    margin-bottom: 48px;
+  }
+
+  .node {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    opacity: 0.25;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    transform: translateY(6px);
+  }
+
+  .node.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .node-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    border: 2px solid transparent;
+    transition: all 0.5s ease;
+    background: #1A1A2E;
+  }
+
+  .node.active .node-icon {
+    border-color: #00D4AA;
+    box-shadow: 0 0 24px rgba(0,212,170,0.3);
+    background: #1A1A2E;
+  }
+
+  .node-label {
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    color: #9A9A9A;
+    transition: color 0.5s ease;
+  }
+
+  .node.active .node-label { color: #E8E8E8; }
+
+  .node-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #6A6A7A;
+    text-align: center;
+    line-height: 1.5;
+    transition: color 0.5s ease;
+  }
+
+  .node.active .node-sub { color: #00D4AA; }
+
+  /* ── Arrow ── */
+  .arrow {
+    flex: 0 0 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    opacity: 0.15;
+    transition: opacity 0.5s ease;
+    position: relative;
+  }
+
+  .arrow.active { opacity: 1; }
+
+  .arrow-line {
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, #00D4AA, #33E5C0);
+    position: relative;
+    overflow: visible;
+  }
+
+  .arrow-line::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid #00D4AA;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+  }
+
+  .arrow-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #00D4AA;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 0;
+    animation: none;
+  }
+
+  .arrow.active .arrow-dot {
+    animation: travel 1s ease-in-out infinite;
+  }
+
+  @keyframes travel {
+    0%   { left: 0; opacity: 1; }
+    90%  { left: calc(100% - 8px); opacity: 1; }
+    100% { left: calc(100% - 8px); opacity: 0; }
+  }
+
+  .arrow-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #00D4AA;
+    white-space: nowrap;
+    margin-top: 6px;
+  }
+
+  /* ── Claude internals panel ── */
+  .internals {
+    width: 100%;
+    max-width: 1100px;
+    background: #1A1A2E;
+    border: 1px solid #2A2A3E;
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 40px;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .internals.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .internals-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #00D4AA;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .steps-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .step {
+    flex: 1;
+    padding: 20px 16px;
+    border-radius: 12px;
+    background: #0F0F0F;
+    border: 1px solid #2A2A3E;
+    text-align: center;
+    opacity: 0.3;
+    transition: all 0.4s ease;
+    position: relative;
+  }
+
+  .step.lit {
+    opacity: 1;
+    border-color: #00D4AA;
+    box-shadow: 0 0 16px rgba(0,212,170,0.15);
+  }
+
+  .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #6A6A7A;
+    margin-bottom: 8px;
+  }
+
+  .step.lit .step-num { color: #00D4AA; }
+
+  .step-icon { font-size: 24px; margin-bottom: 8px; }
+
+  .step-name {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #E8E8E8;
+  }
+
+  .step-desc {
+    font-size: 11px;
+    color: #6A6A7A;
+    line-height: 1.5;
+  }
+
+  .step.lit .step-desc { color: #9A9A9A; }
+
+  .step-arrow {
+    flex: 0 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2A2A3E;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  /* ── Info panel ── */
+  .info-panel {
+    width: 100%;
+    max-width: 1100px;
+    min-height: 100px;
+    background: #1A1A2E;
+    border: 1px solid #2A2A3E;
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 32px;
+    transition: all 0.4s ease;
+  }
+
+  .info-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #00D4AA;
+    margin-bottom: 10px;
+  }
+
+  .info-text {
+    font-size: 14px;
+    color: #9A9A9A;
+    line-height: 1.7;
+  }
+
+  .info-text strong { color: #E8E8E8; }
+
+  .info-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: #0F0F0F;
+    border: 1px solid #2A2A3E;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    color: #00D4AA;
+    line-height: 1.6;
+  }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .btn {
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .btn-primary {
+    background: #00D4AA;
+    color: #0F0F0F;
+  }
+
+  .btn-primary:hover { background: #33E5C0; transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: transparent;
+    color: #9A9A9A;
+    border: 1px solid #2A2A3E;
+  }
+
+  .btn-secondary:hover { border-color: #00D4AA; color: #00D4AA; }
+
+  .step-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #6A6A7A;
+  }
+
+  /* ── Security badge ── */
+  .security-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(240,165,0,0.1);
+    border: 1px solid rgba(240,165,0,0.3);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #F0A500;
+    margin-top: 12px;
+  }
+
+  .tag-pill {
+    display: inline-block;
+    background: rgba(0,212,170,0.1);
+    color: #00D4AA;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="title">Claude API — Request Lifecycle</div>
+<div class="subtitle">From "Send" to Response · Step by Step</div>
+
+<!-- Main flow diagram -->
+<div class="flow">
+
+  <div class="node" id="n0">
+    <div class="node-icon">💻</div>
+    <div class="node-label">Your App</div>
+    <div class="node-sub">Browser / Mobile<br>Client-side UI</div>
+  </div>
+
+  <div class="arrow" id="a0">
+    <div class="arrow-line"><div class="arrow-dot"></div></div>
+    <div class="arrow-label">HTTPS POST</div>
+  </div>
+
+  <div class="node" id="n1">
+    <div class="node-icon">🖥️</div>
+    <div class="node-label">Your Server</div>
+    <div class="node-sub">API key stored<br>securely here</div>
+  </div>
+
+  <div class="arrow" id="a1">
+    <div class="arrow-line"><div class="arrow-dot"></div></div>
+    <div class="arrow-label">SDK / HTTP</div>
+  </div>
+
+  <div class="node" id="n2">
+    <div class="node-icon">🔮</div>
+    <div class="node-label">Anthropic API</div>
+    <div class="node-sub">Authenticates<br>routes request</div>
+  </div>
+
+  <div class="arrow" id="a2">
+    <div class="arrow-line"><div class="arrow-dot"></div></div>
+    <div class="arrow-label">inference</div>
+  </div>
+
+  <div class="node" id="n3">
+    <div class="node-icon">✨</div>
+    <div class="node-label">Claude</div>
+    <div class="node-sub">Processes<br>generates</div>
+  </div>
+
+  <div class="arrow" id="a3">
+    <div class="arrow-line" style="transform:scaleX(-1)"><div class="arrow-dot"></div></div>
+    <div class="arrow-label">response JSON</div>
+  </div>
+
+  <div class="node" id="n4">
+    <div class="node-icon">📦</div>
+    <div class="node-label">API Response</div>
+    <div class="node-sub">message · usage<br>stop_reason</div>
+  </div>
+
+</div>
+
+<!-- Claude internals -->
+<div class="internals" id="internals">
+  <div class="internals-title">⚡ Inside Claude's Processing</div>
+  <div class="steps-row">
+
+    <div class="step" id="s0">
+      <div class="step-num">01</div>
+      <div class="step-icon">✂️</div>
+      <div class="step-name">Tokenize</div>
+      <div class="step-desc">Breaks text into tokens — words, parts of words, symbols</div>
+    </div>
+
+    <div class="step-arrow">→</div>
+
+    <div class="step" id="s1">
+      <div class="step-num">02</div>
+      <div class="step-icon">🔢</div>
+      <div class="step-name">Embed</div>
+      <div class="step-desc">Each token → a list of numbers capturing all possible meanings</div>
+    </div>
+
+    <div class="step-arrow">→</div>
+
+    <div class="step" id="s2">
+      <div class="step-num">03</div>
+      <div class="step-icon">🎯</div>
+      <div class="step-name">Contextualize</div>
+      <div class="step-desc">Surrounding words refine meaning — "quantum" in physics vs computing</div>
+    </div>
+
+    <div class="step-arrow">→</div>
+
+    <div class="step" id="s3">
+      <div class="step-num">04</div>
+      <div class="step-icon">🎲</div>
+      <div class="step-name">Generate</div>
+      <div class="step-desc">Calculates probability for each next word. Picks one. Repeats.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Info panel -->
+<div class="info-panel" id="info">
+  <div class="info-title" id="info-title">Click "Start" to walk through the request lifecycle</div>
+  <div class="info-text" id="info-text">Every Claude API interaction follows 5 predictable phases. Understanding them helps you design secure architectures, set the right token limits, and debug issues faster.</div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="btn btn-secondary" id="btn-reset" onclick="reset()">↺ Reset</button>
+  <span class="step-counter" id="counter">Step 0 / 8</span>
+  <button class="btn btn-primary" id="btn-next" onclick="next()">▶ Start</button>
+</div>
+
+<script>
+const steps = [
+  {
+    nodes: [0],
+    arrows: [],
+    internals: false,
+    title: "Step 1 — The User Clicks Send",
+    text: `Your app lives in the browser. The user types a message and hits send.<br><br>
+    <strong>Critical rule:</strong> Never put your Anthropic API key here. Client-side code is public — anyone can inspect it.<br><br>
+    <div class="security-note">⚠️ API key in client code = anyone can steal it and bill your account</div>`
+  },
+  {
+    nodes: [0, 1],
+    arrows: [0],
+    internals: false,
+    title: "Step 2 — Request Goes to Your Server",
+    text: `Your app sends the user's message to <strong>your own server</strong> over HTTPS.<br><br>
+    Your server is the secure intermediary. It holds the API key safely as an environment variable — never exposed to the browser.<br><br>
+    <div class="info-code">// Your server (Node/Python/Go — not the browser)
+ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]</div>`
+  },
+  {
+    nodes: [0, 1, 2],
+    arrows: [0, 1],
+    internals: false,
+    title: "Step 3 — Your Server Calls the Anthropic API",
+    text: `Your server constructs the API request and sends it to Anthropic. You can use an official SDK or plain HTTP.<br><br>
+    <strong>Every request requires:</strong><br>
+    <span class="tag-pill">API Key</span>
+    <span class="tag-pill">model</span>
+    <span class="tag-pill">messages</span>
+    <span class="tag-pill">max_tokens</span><br><br>
+    <div class="info-code">client.messages.create(
+  model="claude-sonnet-4-6",
+  max_tokens=1024,
+  messages=[{"role": "user", "content": user_input}]
+)</div>`
+  },
+  {
+    nodes: [0, 1, 2, 3],
+    arrows: [0, 1, 2],
+    internals: true,
+    internal_steps: [],
+    title: "Step 4 — Claude Starts Processing",
+    text: `Anthropic authenticates your key and routes the request to Claude. Now the model begins its 4-stage internal process.<br><br>
+    Watch the processing steps light up below ↓`
+  },
+  {
+    nodes: [0, 1, 2, 3],
+    arrows: [0, 1, 2],
+    internals: true,
+    internal_steps: [0],
+    title: "Inside Claude — Tokenization",
+    text: `Claude first breaks your input into <strong>tokens</strong>.<br><br>
+    Tokens can be whole words, parts of words, spaces, or punctuation. For a rough estimate: <strong>1 token ≈ ¾ of a word</strong>.<br><br>
+    <div class="info-code">"Hello, world!" → ["Hello", ",", " world", "!"]
+"tokenization" → ["token", "ization"]</div>`
+  },
+  {
+    nodes: [0, 1, 2, 3],
+    arrows: [0, 1, 2],
+    internals: true,
+    internal_steps: [0, 1],
+    title: "Inside Claude — Embedding",
+    text: `Each token is converted into an <strong>embedding</strong> — a list of thousands of numbers that captures every possible meaning of that word.<br><br>
+    Think of it as a numerical dictionary entry. The word "bank" gets a vector that contains both "river bank" and "financial bank" meanings.<br><br>
+    <div class="info-code">token "bank" → [0.23, -0.81, 0.44, 0.12, ... ] // 3072 numbers</div>`
+  },
+  {
+    nodes: [0, 1, 2, 3],
+    arrows: [0, 1, 2],
+    internals: true,
+    internal_steps: [0, 1, 2],
+    title: "Inside Claude — Contextualization",
+    text: `Surrounding words <strong>reshape each embedding</strong> to highlight the right meaning.<br><br>
+    "quantum <strong>physics</strong>" → embedding shifts toward science meaning<br>
+    "quantum <strong>computing</strong>" → embedding shifts toward CS meaning<br><br>
+    This is the attention mechanism — every word attends to every other word to understand context.`
+  },
+  {
+    nodes: [0, 1, 2, 3],
+    arrows: [0, 1, 2],
+    internals: true,
+    internal_steps: [0, 1, 2, 3],
+    title: "Inside Claude — Generation",
+    text: `The contextualized embeddings pass through an output layer that calculates a <strong>probability for every possible next word</strong>.<br><br>
+    Claude doesn't always pick the highest probability word — it uses controlled randomness (temperature) to produce natural, varied responses.<br><br>
+    After selecting a word, it adds it to the sequence and repeats the entire 4-step process for the next word — until:<br>
+    <span class="tag-pill">max_tokens reached</span>
+    <span class="tag-pill">end-of-sequence token</span>
+    <span class="tag-pill">stop sequence matched</span>`
+  },
+  {
+    nodes: [0, 1, 2, 3, 4],
+    arrows: [0, 1, 2, 3],
+    internals: true,
+    internal_steps: [0, 1, 2, 3],
+    title: "Step 5 — Response Returns to Your App",
+    text: `The API returns a structured JSON response. Your server forwards the generated text to your client.<br><br>
+    <div class="info-code">{
+  "content": [{"type": "text", "text": "Claude's reply..."}],
+  "stop_reason": "end_turn",  // or "max_tokens"
+  "usage": {
+    "input_tokens": 24,
+    "output_tokens": 183
+  }
+}</div><br>
+    Your app reads <strong>stop_reason</strong> to understand why Claude stopped — and <strong>usage</strong> to track costs.`
+  }
+];
+
+let current = -1;
+
+function reset() {
+  current = -1;
+  document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.arrow').forEach(a => a.classList.remove('active'));
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('lit'));
+  document.getElementById('internals').classList.remove('visible');
+  document.getElementById('info-title').textContent = 'Click "Start" to walk through the request lifecycle';
+  document.getElementById('info-text').innerHTML = 'Every Claude API interaction follows 5 predictable phases. Understanding them helps you design secure architectures, set the right token limits, and debug issues faster.';
+  document.getElementById('counter').textContent = 'Step 0 / ' + steps.length;
+  document.getElementById('btn-next').textContent = '▶ Start';
+}
+
+function next() {
+  current++;
+  if (current >= steps.length) { reset(); return; }
+
+  const s = steps[current];
+
+  // Nodes
+  document.querySelectorAll('.node').forEach((n, i) => {
+    n.classList.toggle('active', s.nodes.includes(i));
+  });
+
+  // Arrows
+  document.querySelectorAll('.arrow').forEach((a, i) => {
+    a.classList.toggle('active', s.arrows.includes(i));
+  });
+
+  // Internals panel
+  const internals = document.getElementById('internals');
+  if (s.internals) {
+    internals.classList.add('visible');
+    document.querySelectorAll('.step').forEach((el, i) => {
+      el.classList.toggle('lit', s.internal_steps && s.internal_steps.includes(i));
+    });
+  } else {
+    internals.classList.remove('visible');
+  }
+
+  // Info panel
+  document.getElementById('info-title').textContent = s.title;
+  document.getElementById('info-text').innerHTML = s.text;
+
+  // Counter + button
+  document.getElementById('counter').textContent = `Step ${current + 1} / ${steps.length}`;
+  document.getElementById('btn-next').textContent = current === steps.length - 1 ? '↺ Restart' : 'Next →';
+}
+</script>
+</body>
+</html>
