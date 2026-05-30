@@ -313,6 +313,10 @@
     display: flex;
     gap: 16px;
     align-items: center;
+    width: 100%;
+    max-width: 1100px;
+    justify-content: space-between;
+    margin-bottom: 14px;
   }
 
   .btn {
@@ -378,6 +382,13 @@
 
 <div class="title">Claude API — Request Lifecycle</div>
 <div class="subtitle">From "Send" to Response · Step by Step</div>
+
+<!-- Controls at top -->
+<div class="controls">
+  <button class="btn btn-primary" id="btn-next" onclick="next()">▶ Start</button>
+  <span class="step-counter" id="counter">Step 0 / 9</span>
+  <button class="btn btn-secondary" id="btn-reset" onclick="reset()">↺ Reset</button>
+</div>
 
 <!-- Main flow diagram -->
 <div class="flow">
@@ -478,15 +489,8 @@
 
 <!-- Info panel -->
 <div class="info-panel" id="info">
-  <div class="info-title" id="info-title">Click "Start" to walk through the request lifecycle</div>
-  <div class="info-text" id="info-text">Every Claude API interaction follows 5 predictable phases. Understanding them helps you design secure architectures, set the right token limits, and debug issues faster.</div>
-</div>
-
-<!-- Controls -->
-<div class="controls">
-  <button class="btn btn-secondary" id="btn-reset" onclick="reset()">↺ Reset</button>
-  <span class="step-counter" id="counter">Step 0 / 8</span>
-  <button class="btn btn-primary" id="btn-next" onclick="next()">▶ Start</button>
+  <div class="info-title" id="info-title"></div>
+  <div class="info-text" id="info-text"></div>
 </div>
 
 <script>
@@ -600,55 +604,37 @@ ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]</div>`
   }
 ];
 
-let current = -1;
+let current = steps.length - 1;
 
-function reset() {
-  current = -1;
-  document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
-  document.querySelectorAll('.arrow').forEach(a => a.classList.remove('active'));
-  document.querySelectorAll('.step').forEach(s => s.classList.remove('lit'));
-  document.getElementById('internals').classList.remove('visible');
-  document.getElementById('info-title').textContent = '5 phases. Every Claude API call. Every time.';
-  document.getElementById('info-text').innerHTML = 'Miss one and your app leaks keys, drops tool calls, or burns tokens. <strong>Hit ▶ Start</strong> — takes 60 seconds.';
-  document.getElementById('counter').textContent = 'Step 0 / ' + steps.length;
-  document.getElementById('btn-next').textContent = '▶ Start';
-}
-
-function next() {
-  current++;
-  if (current >= steps.length) { reset(); return; }
-
-  const s = steps[current];
-
-  // Nodes
-  document.querySelectorAll('.node').forEach((n, i) => {
-    n.classList.toggle('active', s.nodes.includes(i));
-  });
-
-  // Arrows
-  document.querySelectorAll('.arrow').forEach((a, i) => {
-    a.classList.toggle('active', s.arrows.includes(i));
-  });
-
-  // Internals panel
+function applyStep(idx) {
+  const s = steps[idx];
+  document.querySelectorAll('.node').forEach((n, i) => n.classList.toggle('active', s.nodes.includes(i)));
+  document.querySelectorAll('.arrow').forEach((a, i) => a.classList.toggle('active', s.arrows.includes(i)));
   const internals = document.getElementById('internals');
   if (s.internals) {
     internals.classList.add('visible');
-    document.querySelectorAll('.step').forEach((el, i) => {
-      el.classList.toggle('lit', s.internal_steps && s.internal_steps.includes(i));
-    });
+    document.querySelectorAll('.step').forEach((el, i) => el.classList.toggle('lit', s.internal_steps && s.internal_steps.includes(i)));
   } else {
     internals.classList.remove('visible');
   }
-
-  // Info panel
   document.getElementById('info-title').textContent = s.title;
   document.getElementById('info-text').innerHTML = s.text;
-
-  // Counter + button
-  document.getElementById('counter').textContent = `Step ${current + 1} / ${steps.length}`;
-  document.getElementById('btn-next').textContent = current === steps.length - 1 ? '↺ Restart' : 'Next →';
+  document.getElementById('counter').textContent = `Step ${idx + 1} / ${steps.length}`;
+  document.getElementById('btn-next').textContent = idx === steps.length - 1 ? '↺ Restart' : 'Next →';
 }
+
+function reset() {
+  current = 0;
+  applyStep(current);
+}
+
+function next() {
+  current = (current >= steps.length - 1) ? 0 : current + 1;
+  applyStep(current);
+}
+
+// Load showing full final state
+window.addEventListener('DOMContentLoaded', () => applyStep(current));
 </script>
 </body>
 </html>
