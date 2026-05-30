@@ -620,7 +620,7 @@ function applyStep(idx) {
   document.getElementById('info-title').textContent = s.title;
   document.getElementById('info-text').innerHTML = s.text;
   document.getElementById('counter').textContent = `Step ${idx + 1} / ${steps.length}`;
-  document.getElementById('btn-next').textContent = idx === steps.length - 1 ? '↺ Restart' : 'Next →';
+  document.getElementById('btn-next').textContent = idx === steps.length - 1 ? 'Walk Me Through →' : 'Next →';
 }
 
 function reset() {
